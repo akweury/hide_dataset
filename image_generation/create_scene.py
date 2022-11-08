@@ -128,7 +128,8 @@ def render_scene(args):
 
 
 def main(args):
-    render_scene(args)
+    for i in range(args.num_images):
+        render_scene(args)
     # print("...")
 
 
