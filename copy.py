@@ -577,4 +577,3 @@ if __name__ == '__main__':
         print('arguments like this:')
         print()
         print('python render_images.py --help')
-
