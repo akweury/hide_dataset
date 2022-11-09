@@ -7,10 +7,6 @@ import bpy, bpy_extras
 root = Path(__file__).parents[0]
 
 
-def print_hello():
-    print("hello")
-
-
 def extract_args(input_argv=None):
     """
     Pull out command-line arguments after "--". Blender ignores command-line flags
@@ -111,10 +107,10 @@ def add_object(object_dir, name, scale, loc, theta=0):
     filename = os.path.join(object_dir, '%s.blend' % name, 'Object', name)
     bpy.ops.wm.append(filename=filename)
 
+
     # Give it a new name to avoid conflicts
     new_name = '%s_%d' % (name, count)
     bpy.data.objects[name].name = new_name
-
     # Set the new object as active, then rotate, scale, and translate it
     x, y = loc
     bpy.context.view_layer.objects.active = bpy.data.objects[new_name]
@@ -261,7 +257,8 @@ def load_property_json(file_name):
         material_mapping = [(v, k) for k, v in properties['materials'].items()]
         object_mapping = [(v, k) for k, v in properties['shapes'].items()]
         size_mapping = list(properties['sizes'].items())
-    return material_mapping, object_mapping, size_mapping,color_name_to_rgba
+    return material_mapping, object_mapping, size_mapping, color_name_to_rgba
+
 
 def add_random_objects(scene_struct, num_objects, args, camera):
     """
@@ -269,7 +266,7 @@ def add_random_objects(scene_struct, num_objects, args, camera):
     """
 
     # Load the property file
-    material_mapping, object_mapping, size_mapping,color_name_to_rgba = load_property_json("properties.json")
+    material_mapping, object_mapping, size_mapping, color_name_to_rgba = load_property_json("properties.json")
     positions = []
     objects = []
     blender_objects = []
@@ -321,7 +318,6 @@ def add_random_objects(scene_struct, num_objects, args, camera):
         obj_name, obj_name_out = random.choice(object_mapping)
         color_name, rgba = random.choice(list(color_name_to_rgba.items()))
 
-
         # For cube, adjust the size a bit
         if obj_name == 'Cube':
             r /= math.sqrt(2)
@@ -329,9 +325,10 @@ def add_random_objects(scene_struct, num_objects, args, camera):
         # Choose random orientation for the object.
         theta = 360.0 * random.random()
 
-        # Actually add the object to the scene
-        add_object(str(root / "shape"), obj_name, r, (x, y), theta=theta)
+        ############## Actually add the object to the scene ########################
+        add_object(str(root / "shape"), obj_name, r, (x, y), theta=int(theta))
         obj = bpy.context.object
+
         blender_objects.append(obj)
         positions.append((x, y, r))
 
@@ -389,3 +386,24 @@ def compute_all_relationships(scene_struct, eps=0.2):
                     related.add(j)
             all_relationships[name].append(sorted(list(related)))
     return all_relationships
+
+
+def args_parser():
+    parser = argparse.ArgumentParser()
+    argv = extract_args()
+    args = parser.parse_args(argv)
+
+    # load args from file
+    args_file_path = str(root / "args.json")
+    if os.path.isfile(args_file_path):
+        with open(args_file_path, 'r') as fp:
+            loaded_args = json.load(fp)
+        # Replace given_args with the loaded default values
+        for key, value in loaded_args.items():
+            if key not in ["whitelist"]:  # Do not overwrite these keys
+                setattr(args, key, value)
+        print('\n==> Args were loaded from file "{}".'.format(args_file_path))
+    else:
+        print('\n==> Args file "{}" was not found!'.format(args_file_path))
+
+    return args
